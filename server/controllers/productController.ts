@@ -19,3 +19,31 @@ export const getProducts = (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to fetch products" });
   }
 };
+
+export const createProduct = (req: Request, res: Response) => {
+  const { name_mm, name_en, barcode, sale_price, reorder_level } = req.body;
+
+  if (!name_mm || !sale_price) {
+    res.status(400).json({ error: "Name (MM) and Sale Price are required" });
+    return;
+  }
+
+  try {
+    const stmt = db.prepare(`
+      INSERT INTO products (name_mm, name_en, barcode, sale_price, reorder_level)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+
+    const result = stmt.run(
+      name_mm,
+      name_en,
+      barcode,
+      sale_price,
+      reorder_level || 10,
+    );
+    res.json({ id: result.lastInsertRowid, success: true });
+  } catch (error: any) {
+    console.error("Error creating product:", error);
+    res.status(500).json({ error: "Failed to create product" });
+  }
+};

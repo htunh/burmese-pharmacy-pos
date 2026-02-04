@@ -1,5 +1,13 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { ShoppingBag, BookOpen, type LucideIcon } from "lucide-react";
+import {
+  ShoppingBag,
+  BookOpen,
+  Plus,
+  ClipboardCheck,
+  TrendingUp,
+  History as HistoryIcon,
+  type LucideIcon,
+} from "lucide-react";
 import clsx from "clsx";
 
 const NavItem = ({
@@ -39,6 +47,10 @@ export function Layout() {
         </div>
 
         <NavItem to="/" icon={ShoppingBag} label="POS" />
+        <NavItem to="/product/add" icon={Plus} label="New" />
+        <NavItem to="/stock/receive" icon={ClipboardCheck} label="Stock" />
+        <NavItem to="/stock/history" icon={HistoryIcon} label="History" />
+        <NavItem to="/report/profit" icon={TrendingUp} label="Profit" />
         <NavItem to="/ledger" icon={BookOpen} label="Ledger" />
       </nav>
 

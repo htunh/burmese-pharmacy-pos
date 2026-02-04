@@ -53,6 +53,42 @@ export interface SaleDetails {
   };
 }
 
+export interface StockHistoryItem {
+  id: number;
+  batch_no: string;
+  expiry_date: string;
+  cost_price: number;
+  qty: number;
+  received_at: string;
+  name_mm: string;
+  name_en: string;
+}
+
+export interface StockHistoryResponse {
+  history: StockHistoryItem[];
+  totalValue: number;
+}
+
+export interface ProfitReportItem {
+  sold_at: string;
+  invoice_no: string;
+  name_mm: string;
+  name_en: string;
+  qty: number;
+  unit_price: number;
+  cost_at_sale: number;
+  profit: number;
+}
+
+export interface ProfitReportResponse {
+  items: ProfitReportItem[];
+  summary: {
+    totalRevenue: number;
+    totalCost: number;
+    netProfit: number;
+  };
+}
+
 export const api = {
   getProducts: async () => {
     const response = await axios.get<Product[]>(`${API_URL}/products`);
@@ -64,6 +100,45 @@ export const api = {
     payment: { method: string; amount: number };
   }) => {
     const response = await axios.post(`${API_URL}/sale`, payload);
+    return response.data;
+  },
+
+  createProduct: async (data: {
+    name_mm: string;
+    name_en?: string;
+    barcode?: string;
+    sale_price: number;
+    reorder_level?: number;
+  }) => {
+    const response = await axios.post(`${API_URL}/products`, data);
+    return response.data;
+  },
+
+  receiveStock: async (data: {
+    product_id: number;
+    batch_no: string;
+    expiry_date: string;
+    cost_price: number;
+    qty: number;
+  }) => {
+    const response = await axios.post(`${API_URL}/api/stock/receive`, data);
+    return response.data;
+  },
+
+  getStockHistory: async () => {
+    const response = await axios.get<StockHistoryResponse>(
+      `${API_URL}/api/stock/history`,
+    );
+    return response.data;
+  },
+
+  getDetailedProfit: async (startDate: string, endDate: string) => {
+    const response = await axios.get<ProfitReportResponse>(
+      `${API_URL}/report/detailed-profit`,
+      {
+        params: { startDate, endDate },
+      },
+    );
     return response.data;
   },
 

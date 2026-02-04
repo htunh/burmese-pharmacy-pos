@@ -78,3 +78,53 @@ export const getLedger = (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to fetch ledger" });
   }
 };
+
+export const getDetailedProfit = (req: Request, res: Response) => {
+  const { startDate, endDate } = req.query;
+
+  if (!startDate || !endDate) {
+    res.status(400).json({ error: "Start date and End date are required" });
+    return;
+  }
+
+  try {
+    const items = db
+      .prepare(
+        `
+      SELECT 
+        s.sold_at,
+        s.invoice_no,
+        p.name_mm,
+        p.name_en,
+        si.qty,
+        si.unit_price, 
+        si.cost_at_sale
+      FROM sale_items si
+      JOIN sales s ON si.sale_id = s.id
+      JOIN products p ON si.product_id = p.id
+      WHERE date(s.sold_at) BETWEEN date(?) AND date(?)
+      ORDER BY s.sold_at DESC
+    `,
+      )
+      .all(startDate, endDate);
+
+    const detailedItems = items.map((item: any) => ({
+      ...item,
+      profit: (item.unit_price - item.cost_at_sale) * item.qty,
+    }));
+
+    const summary = detailedItems.reduce(
+      (acc: any, item: any) => ({
+        totalRevenue: acc.totalRevenue + item.unit_price * item.qty,
+        totalCost: acc.totalCost + item.cost_at_sale * item.qty,
+        netProfit: acc.netProfit + item.profit,
+      }),
+      { totalRevenue: 0, totalCost: 0, netProfit: 0 },
+    );
+
+    res.json({ items: detailedItems, summary });
+  } catch (error) {
+    console.error("Error fetching detailed profit:", error);
+    res.status(500).json({ error: "Failed to fetch detailed profit report" });
+  }
+};

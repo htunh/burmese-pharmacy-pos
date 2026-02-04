@@ -6,6 +6,7 @@ import { initDb } from "./db/database";
 import productsRouter from "./routes/products";
 import salesRouter from "./routes/sales";
 import reportsRouter from "./routes/reports";
+import stockRouter from "./routes/stock";
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use("/sale", salesRouter); // helper for POST /sale handled as / in salesRou
 app.use("/report", reportsRouter); // handles /report/profit
 app.use("/api", reportsRouter); // handles /api/ledger
 app.use("/api/sales", salesRouter); // handles /api/sales/:id
+app.use("/api/stock", stockRouter); // handles /api/stock/receive
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
