@@ -23,12 +23,16 @@ console.log("Server initialized.");
 
 // Register Routes
 app.use("/products", productsRouter);
-app.use("/sale", salesRouter); // helper for POST /sale handled as / in salesRouter
-app.use("/report", reportsRouter); // handles /report/profit
-app.use("/api", reportsRouter); // handles /api/ledger
-app.use("/api/sales", salesRouter); // handles /api/sales/:id
-app.use("/api/stock", stockRouter); // handles /api/stock/receive
+app.use("/sale", salesRouter);
+app.use("/report", reportsRouter);
+app.use("/api", reportsRouter);
+app.use("/api/sales", salesRouter);
+app.use("/api/stock", stockRouter);
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== "production") {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+export default app;

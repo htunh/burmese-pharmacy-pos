@@ -1,0 +1,16 @@
+{
+  "name": "burmese-pharmacy-pos-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install": "pnpm install",
+    "build": "pnpm --filter client build && pnpm --filter server build"
+  },
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "engines": {
+    "node": "18.x"
+  }
+}
