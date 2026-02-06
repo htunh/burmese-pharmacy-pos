@@ -133,7 +133,7 @@ const seedReal = () => {
 
   const insertBatch = db.prepare(`
     INSERT INTO inventory_batches (product_id, batch_no, expiry_date, cost_price, qty_on_hand, received_at)
-    VALUES (?, 'INIT', '2026-01-01', ?, ?, ?)
+    VALUES (?, 'INIT', '2027-01-01', ?, ?, ?)
   `);
 
   let count = 0;

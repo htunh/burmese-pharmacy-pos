@@ -52,9 +52,9 @@ export default function ReceiveStockPage() {
 
   const filteredProducts = products.filter(
     (p) =>
-      p.name_en.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.name_mm.includes(searchQuery) ||
-      p.barcode.includes(searchQuery),
+      p.name_en?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.name_mm?.includes(searchQuery) ||
+      p.barcode?.includes(searchQuery),
   );
 
   const handleSelectProduct = (product: Product) => {
@@ -96,7 +96,7 @@ export default function ReceiveStockPage() {
           {/* Product Selection */}
           <div className="relative">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Select Product
+              ဆေးရွေးပါ (Select Product)
             </label>
             <div className="relative">
               <Search
@@ -105,7 +105,7 @@ export default function ReceiveStockPage() {
               />
               <input
                 type="text"
-                placeholder="Search product by name or barcode..."
+                placeholder="ဆေးအမည် (သို့) ဘားကုဒ်ဖြင့် ရှာရန်..."
                 value={searchQuery}
                 onFocus={() => setShowCombobox(true)}
                 onChange={(e) => {
@@ -133,7 +133,7 @@ export default function ReceiveStockPage() {
               <div className="absolute z-10 w-full mt-2 bg-white rounded-xl shadow-lg border border-gray-100 max-h-60 overflow-y-auto">
                 {filteredProducts.length === 0 ? (
                   <div className="p-4 text-center text-gray-500 text-sm">
-                    No products found
+                    ဆေးမတွေ့ပါ (No products found)
                   </div>
                 ) : (
                   filteredProducts.map((product) => (
@@ -249,7 +249,7 @@ export default function ReceiveStockPage() {
               onClick={() => navigate("/")}
               className="px-6 py-3 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors"
             >
-              Cancel
+              မလုပ်တော့ပါ (Cancel)
             </button>
             <button
               type="submit"
@@ -257,7 +257,7 @@ export default function ReceiveStockPage() {
               className="px-8 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-md flex items-center gap-2 disabled:opacity-70 transition-all"
             >
               <Save size={18} />
-              {isSubmitting ? "Saving..." : "Confirm Receive"}
+              {isSubmitting ? "Saving..." : "အတည်ပြုမည် (Confirm)"}
             </button>
           </div>
         </form>

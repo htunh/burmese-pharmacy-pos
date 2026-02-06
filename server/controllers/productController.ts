@@ -6,7 +6,11 @@ export const getProducts = (req: Request, res: Response) => {
     const products = db
       .prepare(
         `
-      SELECT p.*, COALESCE(SUM(ib.qty_on_hand), 0) as total_qty
+      SELECT 
+        p.*, 
+        COALESCE(SUM(ib.qty_on_hand), 0) as total_qty,
+        COALESCE(SUM(CASE WHEN ib.expiry_date > date('now') THEN ib.qty_on_hand ELSE 0 END), 0) as usable_qty,
+        MAX(CASE WHEN ib.expiry_date > date('now') AND ib.expiry_date <= date('now', '+60 days') THEN 1 ELSE 0 END) as has_expiring_batch
       FROM products p
       LEFT JOIN inventory_batches ib ON p.id = ib.product_id
       GROUP BY p.id

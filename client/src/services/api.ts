@@ -9,6 +9,9 @@ export interface Product {
   barcode: string;
   sale_price: number;
   total_qty: number;
+  usable_qty: number;
+  has_expiring_batch: number; // 1 or 0
+  reorder_level?: number;
 }
 
 export interface LedgerItem {

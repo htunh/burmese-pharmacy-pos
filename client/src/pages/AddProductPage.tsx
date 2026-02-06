@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { api } from "../services/api";
-import { Plus, Barcode, Save } from "lucide-react";
+import { Plus, Save } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -55,7 +55,9 @@ export default function AddProductPage() {
           <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
             <Plus size={20} />
           </div>
-          <h1 className="text-xl font-bold text-gray-800">Add New Product</h1>
+          <h1 className="text-xl font-bold text-gray-800">
+            ဆေးအသစ် ထပ်ထည့်ရန် (Add New Product)
+          </h1>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
@@ -80,7 +82,7 @@ export default function AddProductPage() {
             {/* Name EN */}
             <div className="col-span-2 md:col-span-1">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Medicine Name (English)
+                ဆေးအမည် (အင်္ဂလိပ်)
               </label>
               <input
                 {...register("name_en")}
@@ -92,11 +94,11 @@ export default function AddProductPage() {
             {/* Barcode */}
             <div className="col-span-2 md:col-span-1">
               <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <Barcode size={16} /> ဘားကုဒ် (Barcode)
+                ဘားကုဒ် (Barcode)
               </label>
               <input
                 {...register("barcode")}
-                placeholder="Scan or enter code"
+                placeholder="ဘားကုဒ် ဖတ်ပါ (သို့) ရိုက်ထည့်ပါ"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
               />
             </div>
@@ -143,7 +145,7 @@ export default function AddProductPage() {
               onClick={() => navigate("/")}
               className="px-6 py-3 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors"
             >
-              Cancel
+              မလုပ်တော့ပါ (Cancel)
             </button>
             <button
               type="submit"
@@ -151,7 +153,7 @@ export default function AddProductPage() {
               className="px-8 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-md flex items-center gap-2 disabled:opacity-70 transition-all"
             >
               <Save size={18} />
-              {isSubmitting ? "Saving..." : "Save Product"}
+              {isSubmitting ? "Saving..." : "သိမ်းဆည်းမည် (Save)"}
             </button>
           </div>
         </form>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../services/api";
 import { ReceiptModal } from "../components/ReceiptModal";
-import { Calendar, ArrowRight, ArrowLeft } from "lucide-react";
+import { Calendar, ArrowRight, ArrowLeft, BookOpen } from "lucide-react";
 import clsx from "clsx";
 
 export default function LedgerPage() {
@@ -47,13 +47,18 @@ export default function LedgerPage() {
     <div className="flex flex-col h-full bg-gray-100">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">
-            နေ့စဉ်စာရင်း (Daily Ledger)
-          </h1>
-          <p className="text-gray-500 text-sm">
-            Track daily sales and expenses
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
+            <BookOpen size={24} />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-gray-800">
+              နေ့စဉ်စာရင်း (Daily Ledger)
+            </h1>
+            <p className="text-gray-500 text-sm">
+              နေ့စဉ် အရောင်းနှင့် စရိတ်စာရင်းများ
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-4 bg-gray-50 p-2 rounded-xl border border-gray-200">
@@ -87,7 +92,7 @@ export default function LedgerPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
           <span className="text-gray-500 text-xs font-semibold uppercase tracking-wider mb-1">
-            Total Income
+            ဝင်ငွေ စုစုပေါင်း (Total Income)
           </span>
           <span className="text-2xl font-bold text-green-600">
             +{ledgerData.summary.totalIncome?.toLocaleString() || 0} Ks
@@ -95,7 +100,7 @@ export default function LedgerPage() {
         </div>
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
           <span className="text-gray-500 text-xs font-semibold uppercase tracking-wider mb-1">
-            Total Expense
+            ထွက်ငွေ စုစုပေါင်း (Total Expense)
           </span>
           <span className="text-2xl font-bold text-red-500">
             -{ledgerData.summary.totalExpense?.toLocaleString() || 0} Ks
@@ -103,7 +108,7 @@ export default function LedgerPage() {
         </div>
         <div className="bg-blue-600 p-5 rounded-2xl shadow-md border border-blue-500 flex flex-col text-white">
           <span className="text-blue-100 text-xs font-semibold uppercase tracking-wider mb-1">
-            Net Cash
+            လက်ကျန်ငွေ (Net Cash)
           </span>
           <span className="text-3xl font-bold">
             {ledgerData.summary.netCash?.toLocaleString() || 0} Ks
@@ -136,13 +141,13 @@ export default function LedgerPage() {
                 {loading ? (
                   <tr>
                     <td colSpan={4} className="py-12 text-center text-gray-400">
-                      Loading ledger data...
+                      Loading...
                     </td>
                   </tr>
                 ) : ledgerData.items.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="py-12 text-center text-gray-400">
-                      No transactions for this date
+                      စာရင်းမရှိပါ (No transactions)
                     </td>
                   </tr>
                 ) : (

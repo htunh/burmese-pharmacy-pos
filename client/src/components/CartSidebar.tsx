@@ -17,14 +17,14 @@ export function CartSidebar({ onCheckout }: CartSidebarProps) {
       <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
         <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
           <Receipt className="text-blue-600" />
-          Current Sale
+          လက်ရှိ အရောင်း (Sale)
         </h2>
         {items.length > 0 && (
           <button
             onClick={() => dispatch(clearCart())}
             className="text-red-500 text-sm hover:underline"
           >
-            Clear All
+            ရှင်းမည် (Clear)
           </button>
         )}
       </div>
@@ -33,7 +33,7 @@ export function CartSidebar({ onCheckout }: CartSidebarProps) {
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-400">
             <Receipt size={64} className="mb-4 opacity-20" />
-            <p>No items in cart</p>
+            <p>ခြင်းတောင်း ရှင်းနေပါသည်</p>
           </div>
         ) : (
           items.map((item) => (
@@ -93,11 +93,11 @@ export function CartSidebar({ onCheckout }: CartSidebarProps) {
 
       <div className="p-4 border-t border-gray-200 bg-gray-50">
         <div className="flex justify-between items-center mb-4 text-gray-600">
-          <span>Subtotal</span>
+          <span>ကျသင့်ငွေ (Subtotal)</span>
           <span>{total.toLocaleString()} Ks</span>
         </div>
         <div className="flex justify-between items-center mb-6 text-2xl font-bold text-gray-900">
-          <span>Total</span>
+          <span>စုစုပေါင်း (Total)</span>
           <span>{total.toLocaleString()} Ks</span>
         </div>
 
@@ -111,7 +111,7 @@ export function CartSidebar({ onCheckout }: CartSidebarProps) {
               : "bg-blue-600 hover:bg-blue-700 hover:shadow-blue-200",
           )}
         >
-          Checkout
+          ငွေချေမည် (Checkout)
         </button>
       </div>
     </div>
