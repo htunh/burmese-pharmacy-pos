@@ -1,21 +1,20 @@
-import db from "../db/database";
+import pool from "../db/database";
 
-const cleanDb = () => {
+const cleanDb = async () => {
   console.log("Cleaning database...");
-
   try {
-    db.exec(`
-      DELETE FROM sale_items;
-      DELETE FROM payments;
-      DELETE FROM sales;
-      DELETE FROM inventory_batches;
-      DELETE FROM products;
-      DELETE FROM expenses;
-      DELETE FROM sqlite_sequence;
-    `);
+    await pool.query("DELETE FROM sale_items");
+    await pool.query("DELETE FROM payments");
+    await pool.query("DELETE FROM sales");
+    await pool.query("DELETE FROM inventory_batches");
+    await pool.query("DELETE FROM products");
+    await pool.query("DELETE FROM expenses");
+
     console.log("Database cleaned successfully.");
   } catch (error) {
     console.error("Error cleaning database:", error);
+  } finally {
+    pool.end();
   }
 };
 

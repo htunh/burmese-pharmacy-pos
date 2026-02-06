@@ -1,25 +1,24 @@
 import { Request, Response } from "express";
-import db from "../db/database";
+import { query } from "../db/database";
 
-export const getProfit = (req: Request, res: Response) => {
+export const getProfit = async (req: Request, res: Response) => {
   try {
-    const result = db
-      .prepare(
-        `
+    const result = await query(
+      `
       SELECT SUM(line_total) - SUM(cost_at_sale * qty) as profit
       FROM sale_items
-    `,
-      )
-      .get() as { profit: number };
-    res.json({ totalProfit: result.profit || 0 });
+      `,
+    );
+    const row = result.rows[0] as { profit: number };
+    res.json({ totalProfit: row?.profit || 0 });
   } catch (error) {
     console.error("Error calculating profit:", error);
     res.status(500).json({ error: "Failed to calculate profit" });
   }
 };
 
-export const getLedger = (req: Request, res: Response) => {
-  const date = req.query.date as string;
+export const getLedger = async (req: Request, res: Response) => {
+  const date = req.query.date as string; // YYYY-MM-DD
 
   if (!date) {
     res.status(400).json({ error: "Date parameter is required (YYYY-MM-DD)" });
@@ -28,26 +27,26 @@ export const getLedger = (req: Request, res: Response) => {
 
   try {
     // 1. Get Sales for the date
-    const sales = db
-      .prepare(
-        `
+    const salesRes = await query(
+      `
       SELECT id, sold_at as time, 'INCOME' as type, 'Sale #' || invoice_no as particulars, total as amount
       FROM sales 
-      WHERE sold_at LIKE ?
-    `,
-      )
-      .all(`${date}%`);
+      WHERE CAST(sold_at AS TEXT) LIKE $1
+      `,
+      [`${date}%`],
+    );
+    const sales = salesRes.rows;
 
     // 2. Get Expenses for the date
-    const expenses = db
-      .prepare(
-        `
+    const expensesRes = await query(
+      `
       SELECT id, spent_at as time, 'EXPENSE' as type, particulars, amount
       FROM expenses
-      WHERE spent_at LIKE ?
-    `,
-      )
-      .all(`${date}%`);
+      WHERE CAST(spent_at AS TEXT) LIKE $1
+      `,
+      [`${date}%`],
+    );
+    const expenses = expensesRes.rows;
 
     // 3. Merge and Sort
     const ledger = [...sales, ...expenses].sort(
@@ -79,7 +78,7 @@ export const getLedger = (req: Request, res: Response) => {
   }
 };
 
-export const getDetailedProfit = (req: Request, res: Response) => {
+export const getDetailedProfit = async (req: Request, res: Response) => {
   const { startDate, endDate } = req.query;
 
   if (!startDate || !endDate) {
@@ -88,9 +87,9 @@ export const getDetailedProfit = (req: Request, res: Response) => {
   }
 
   try {
-    const items = db
-      .prepare(
-        `
+    // Postgres date() function works on timestamps
+    const result = await query(
+      `
       SELECT 
         s.sold_at,
         s.invoice_no,
@@ -102,11 +101,12 @@ export const getDetailedProfit = (req: Request, res: Response) => {
       FROM sale_items si
       JOIN sales s ON si.sale_id = s.id
       JOIN products p ON si.product_id = p.id
-      WHERE date(s.sold_at) BETWEEN date(?) AND date(?)
+      WHERE date(s.sold_at) BETWEEN date($1) AND date($2)
       ORDER BY s.sold_at DESC
-    `,
-      )
-      .all(startDate, endDate);
+      `,
+      [startDate, endDate],
+    );
+    const items = result.rows;
 
     const detailedItems = items.map((item: any) => ({
       ...item,

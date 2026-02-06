@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { initDb } from "./db/database";
+import { initDb } from "./db/schema";
 
 import productsRouter from "./routes/products";
 import salesRouter from "./routes/sales";
@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-console.log("Connected to SQLite database via database.ts");
+console.log("Server initialized.");
 
 // Register Routes
 app.use("/products", productsRouter);

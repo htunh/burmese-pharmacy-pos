@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import db from "../db/database";
+import pool from "../db/database";
 
-export const createSale = (req: Request, res: Response) => {
+export const createSale = async (req: Request, res: Response) => {
   const { items, payment } = req.body;
   // items: [{ productId, qty }], payment: { method, amount }
 
@@ -14,27 +14,36 @@ export const createSale = (req: Request, res: Response) => {
     return;
   }
 
-  const transaction = db.transaction(() => {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
     let subtotal = 0;
-    const saleDate = new Date().toISOString();
+    const saleDate = new Date().toISOString(); // Postgres timestamp accepts ISO string
     const invoiceNo = `INV-${Date.now()}`;
 
     // 1. Create Sale Record
-    const insertSale = db.prepare(`
+    const insertSaleRes = await client.query(
+      `
       INSERT INTO sales (invoice_no, sold_at, subtotal, discount, total)
-      VALUES (?, ?, ?, ?, ?)
-    `);
-
-    const saleFields = insertSale.run(invoiceNo, saleDate, 0, 0, 0);
-    const saleId = saleFields.lastInsertRowid;
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING id
+      `,
+      [invoiceNo, saleDate, 0, 0, 0],
+    );
+    const saleId = insertSaleRes.rows[0].id;
 
     // 2. Process Items
     for (const item of items) {
       if (item.qty <= 0) continue;
 
-      const product = db
-        .prepare("SELECT sale_price FROM products WHERE id = ?")
-        .get(item.productId) as { sale_price: number };
+      const productRes = await client.query(
+        "SELECT sale_price FROM products WHERE id = $1",
+        [item.productId],
+      );
+      const product = productRes.rows[0];
+
       if (!product) throw new Error(`Product ID ${item.productId} not found`);
 
       let qtyNeeded = item.qty;
@@ -42,15 +51,15 @@ export const createSale = (req: Request, res: Response) => {
       let lineTotal = 0;
 
       // FIFO: Get batches ordered by expiry
-      const batches = db
-        .prepare(
-          `
+      const batchesRes = await client.query(
+        `
         SELECT * FROM inventory_batches 
-        WHERE product_id = ? AND qty_on_hand > 0 
+        WHERE product_id = $1 AND qty_on_hand > 0 
         ORDER BY expiry_date ASC
-      `,
-        )
-        .all(item.productId) as any[];
+        `,
+        [item.productId],
+      );
+      const batches = batchesRes.rows;
 
       for (const batch of batches) {
         if (qtyNeeded <= 0) break;
@@ -58,24 +67,26 @@ export const createSale = (req: Request, res: Response) => {
         const qtyToTake = Math.min(batch.qty_on_hand, qtyNeeded);
 
         // Update batch
-        db.prepare(
-          "UPDATE inventory_batches SET qty_on_hand = qty_on_hand - ? WHERE id = ?",
-        ).run(qtyToTake, batch.id);
+        await client.query(
+          "UPDATE inventory_batches SET qty_on_hand = qty_on_hand - $1 WHERE id = $2",
+          [qtyToTake, batch.id],
+        );
 
         // Insert sale item
-        db.prepare(
+        await client.query(
           `
           INSERT INTO sale_items (sale_id, product_id, batch_id, qty, unit_price, line_total, cost_at_sale)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-        `,
-        ).run(
-          saleId,
-          item.productId,
-          batch.id,
-          qtyToTake,
-          unitPrice,
-          qtyToTake * unitPrice,
-          batch.cost_price,
+          VALUES ($1, $2, $3, $4, $5, $6, $7)
+          `,
+          [
+            saleId,
+            item.productId,
+            batch.id,
+            qtyToTake,
+            unitPrice,
+            qtyToTake * unitPrice,
+            batch.cost_price,
+          ],
         );
 
         qtyNeeded -= qtyToTake;
@@ -90,57 +101,62 @@ export const createSale = (req: Request, res: Response) => {
     }
 
     // 3. Insert Payment
-    db.prepare(
+    await client.query(
       `
       INSERT INTO payments (sale_id, method, amount)
-      VALUES (?, ?, ?)
-    `,
-    ).run(saleId, payment.method, payment.amount);
-
-    // 4. Update Sale Totals
-    db.prepare("UPDATE sales SET subtotal = ?, total = ? WHERE id = ?").run(
-      subtotal,
-      subtotal,
-      saleId,
+      VALUES ($1, $2, $3)
+      `,
+      [saleId, payment.method, payment.amount],
     );
 
-    return { saleId, invoiceNo, total: subtotal };
-  });
+    // 4. Update Sale Totals
+    await client.query(
+      "UPDATE sales SET subtotal = $1, total = $2 WHERE id = $3",
+      [subtotal, subtotal, saleId],
+    );
 
-  try {
-    const result = transaction();
-    res.json({ success: true, ...result });
+    await client.query("COMMIT");
+
+    res.json({ success: true, saleId, invoiceNo, total: subtotal });
   } catch (err: any) {
+    await client.query("ROLLBACK");
     console.error("Sale transaction failed:", err.message);
     res.status(400).json({ error: err.message });
+  } finally {
+    client.release();
   }
 };
 
-export const getSaleDetails = (req: Request, res: Response) => {
+export const getSaleDetails = async (req: Request, res: Response) => {
   const saleId = req.params.id;
 
   try {
-    const sale = db.prepare("SELECT * FROM sales WHERE id = ?").get(saleId);
+    const saleRes = await pool.query("SELECT * FROM sales WHERE id = $1", [
+      saleId,
+    ]);
+    const sale = saleRes.rows[0];
 
     if (!sale) {
       res.status(404).json({ error: "Sale not found" });
       return;
     }
 
-    const items = db
-      .prepare(
-        `
+    const itemsRes = await pool.query(
+      `
       SELECT si.*, p.name_en, p.name_mm 
       FROM sale_items si
       JOIN products p ON si.product_id = p.id
-      WHERE si.sale_id = ?
-    `,
-      )
-      .all(saleId);
+      WHERE si.sale_id = $1
+      `,
+      [saleId],
+    );
+    const items = itemsRes.rows;
 
-    const payment = db
-      .prepare("SELECT * FROM payments WHERE sale_id = ?")
-      .get(saleId);
+    const paymentRes = await pool.query(
+      "SELECT * FROM payments WHERE sale_id = $1",
+      [saleId],
+    );
+    const payment = paymentRes.rows[0];
 
     res.json({
       sale,

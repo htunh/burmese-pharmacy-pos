@@ -1,83 +1,219 @@
-import db from "./db/database";
+import pool from "./db/database";
+import { initDb } from "./db/schema";
 
-const productsData = [
-  { name_en: "Biogesic 250mg", name_mm: "Biogesic", sale_price: 10000 },
-  { name_en: "Tiffy Big", name_mm: "Tiffy ကြီး", sale_price: 5500 },
-  { name_en: "Ameprolol Xl 25", name_mm: "Ameprolol", sale_price: 30000 },
-  { name_en: "Enervon C", name_mm: "Enervon C", sale_price: 9500 },
-  { name_en: "Silo 1000", name_mm: "Silo 1000", sale_price: 1000 },
-  { name_en: "Parasafe 250", name_mm: "Parasafe", sale_price: 5300 },
-  { name_en: "Solmux", name_mm: "Solmux", sale_price: 1000 },
-];
+const rawData = `Air x		2000	2500
+Airx xrop		5000	5500
+Alben400		400	500
+Antacil		1450	1500
+Appeton 60		43200	45000
+Avolac syr သေး			11000
+Bactolac		4100	4500
+Besadil5	Oct-26	300	500
+Bilac 		1400	1700
+Biogesic120mg		6800	7000
+Biogesic250mg		9600	10000
+Cyprocal		12200	13000
+Dexoph		4800	5500
+Dicitol	May-29	600	1000
+Fame collagen		19400	20000
+Fame Neurogin		11700	13000
+Fame urocrush		11700	12500
+Fast125		500	700
+Fast250		7200	8000
+Fast500		830	1000
+Floxogyl syp		2500	3000
+Gasout		730	1000
+Gripe mixture		4000	
+Kidlac		1200	1500
+Maxbone		11600	15000
+Methycobal500	Feb-29	11600	12500
+Mybacin loz		1150	1500
+Nanakid		4500	5000
+Neubonနီ		400	500
+Omega 3  omega gold		2900	3200
+Omega 3 5s		1750	2000
+Omeprazole 		750	1000
+OracipED		2650	3000
+Orlioc40mg		800	1000
+Paracap		1000	1200
+Parasafe125		3100	3500
+Parasafe250		4800	5300
+Physiodose		800	1000
+Ranitidine	Sep-27	700	1000
+Rhinozol0.05		6250	7000
+Rhinozol0.1		6750	7500
+Sara120mg		5220	6000
+Sara250mg		6000	6600
+Savogesid		700	1000
+Siloxogene tab	May-28	1000	1000
+Siloဝါ		1000	
+Starmox pow			
+Tetra eye		1250	1500
+Tiffy ကြီး		5000	5500
+Tiffy သေး		3300	4000
+Trinamin		2500	3000
+Venus400			
+Vrohto စိမ်း		18000	
+Vrohto ပြာ		15000	
+Xceldrop		3900	4500
+Zinc pai tab		600	1000
+Natrilam1.5 /5		5400	6000
+Urocrush 		11500	13000
+Ameprolol Xl 25		27800	30000
+Mulivitamin card		11000	12500
+Savogesidပန်း		700	1000
+O 3gold ntk		29000	32000
+Silo 		1000	
+ORS ပြာ		850	1000
+Royal D		580	600
+Ediplex		2600	3000
+SsI mom 100		4550	5000
+Cemol 100		3450	4000
+Coxကု		4000	4500
+Mycodyl syr		4470	5000
+Fefa sy		4800	5500
+Zecuf syr		4400	6000
+Konidin sy		4500	5000
+Vifex		7400	8000
+PB tussive		3300	4000
+PB mycolyte		3400	4000
+Wood နီ		14500	15000
+Wood ပြာ		14500	15000
+Ascoril sy		6500	7000
+Chericof syr		8150	9000
+Nanakid		4400	5000
+Mexy syr		3450	4000
+Cetrine syr		2900	3200
+Safil2		3500	5000
+Salbutamol ရှူ		9500	11000
+Motimax 5		18500	20000
+Motimax 10		26500	30000
+Roshir 10		2650	3000
+Atornod 10		7300	10000
+Levastor 20		13000	15000
+Cardivas 3.125		2600	3000
+Deriphllin		720	800
+OG		31700	33000
+OF		31200	32000
+Cypridin		1750	2000
+Vitacap		7000	7500
+Nutrivita		2650	3000
+Reevit		17000	20000
+Enervon C		9000	9500
+Cyprohep		11500	15000
+Hemarexin		1550	2000
+Venus		30500	3500
+Imancee		2100	2500
+Dofenal 250		2700	3000
+Dofenal 500		3150	3500
+Mefdol f		1250	1500
+Enat 400		8350	9000
+Prim E		7800	8500
+Eposoft		10000	10500
+Ferrovit		3350	3500
+Bet GM		4250	5000
+Gentene c		4800	5000
+Compound cream		2800	3000
+ငှက်နှစ်ကောင်		1000	1200
+Unison ointment 		2150	2500
+Zema 		2750	3500
+29A		1650	1800
+Caramine 		3700	4000
+Fungiderm 		3770	4000
+Sk စိမ်း		4200	5000
+Skineal		8000	9000
+Sonaderm		4300	5000`;
 
-function seed() {
-  console.log("🌱 Starting database seed...");
+const seedReal = async () => {
+  console.log("Seeding real data...");
+  const lines = rawData.split("\n");
 
-  const insertProduct = db.prepare(`
-    INSERT INTO products (name_mm, name_en, barcode, sale_price, reorder_level)
-    VALUES (@name_mm, @name_en, @barcode, @sale_price, @reorder_level)
-  `);
+  const client = await pool.connect();
 
-  const insertBatch = db.prepare(`
-    INSERT INTO inventory_batches (product_id, batch_no, expiry_date, cost_price, qty_on_hand, received_at)
-    VALUES (@product_id, @batch_no, @expiry_date, @cost_price, @qty_on_hand, @received_at)
-  `);
+  try {
+    await initDb();
+    await client.query("BEGIN");
 
-  const deleteAllProducts = db.prepare("DELETE FROM products");
-  const deleteAllBatches = db.prepare("DELETE FROM inventory_batches");
+    let count = 0;
 
-  db.transaction(() => {
-    // Optional: Clear existing data
-    // deleteAllBatches.run();
-    // deleteAllProducts.run();
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
 
-    for (const [index, p] of productsData.entries()) {
-      // Generate dummy barcode and reorder level
-      const barcode = `885${String(index + 1).padStart(5, "0")}`;
-      const reorder_level = 10;
+      const parts = trimmed
+        .split(/[\t]+/)
+        .map((p) => p.trim())
+        .filter((p) => p !== "");
 
-      const info = insertProduct.run({
-        name_mm: p.name_mm,
-        name_en: p.name_en,
-        barcode,
-        sale_price: p.sale_price,
-        reorder_level,
-      });
+      // Heuristic parsing
+      let name = parts[0];
+      let cost = 0;
+      let price = 0;
 
-      const productId = info.lastInsertRowid as number;
-      console.log(`Inserted product: ${p.name_en} (ID: ${productId})`);
+      // Case 1: 4 parts (Name, Date, Cost, Price)
+      if (parts.length === 4) {
+        cost = parseInt(parts[2].replace(/,/g, "")) || 0;
+        price = parseInt(parts[3].replace(/,/g, "")) || 0;
+      }
+      // Case 2: 3 parts (Name, Date/Cost, Cost/Price)
+      else if (parts.length === 3) {
+        const p1 = parts[1];
+        const p2 = parts[2];
 
-      // Create 2-3 dummy batches
-      const numBatches = Math.floor(Math.random() * 2) + 2; // 2 or 3
-      for (let i = 0; i < numBatches; i++) {
-        const costPrice = Math.floor(p.sale_price * 0.7);
-        const qty = Math.floor(Math.random() * 50) + 20; // 20-70
-        const batchNo = `B${Date.now().toString().slice(-6)}-${productId}-${i}`;
+        const isNum1 = /^\d+$/.test(p1.replace(/,/g, ""));
+        const isNum2 = /^\d+$/.test(p2.replace(/,/g, ""));
 
-        // Random expiry date next year (2027)
-        const month = String(Math.floor(Math.random() * 12) + 1).padStart(
-          2,
-          "0",
+        if (isNum1 && isNum2) {
+          cost = parseInt(p1.replace(/,/g, ""));
+          price = parseInt(p2.replace(/,/g, ""));
+        } else {
+          const val = parseInt(p2.replace(/,/g, ""));
+          if (val) {
+            price = val;
+            cost = Math.round(val * 0.8);
+          }
+        }
+      }
+      // Case 3: 2 parts (Name, Number)
+      else if (parts.length === 2) {
+        const val = parseInt(parts[1].replace(/,/g, ""));
+        if (!isNaN(val)) {
+          price = val;
+          cost = Math.round(val * 0.8);
+        } else {
+          console.log(`Skipping (No price): ${name}`);
+        }
+      }
+      // Case 4: 1 part (Name only)
+      else if (parts.length === 1) {
+        console.log(`Skipping (No data): ${name}`);
+      }
+
+      if (price > 0 || cost > 0) {
+        // Insert
+        const res = await client.query(
+          "INSERT INTO products (name_mm, name_en, sale_price) VALUES ($1, $1, $2) RETURNING id",
+          [name, price],
         );
-        const day = String(Math.floor(Math.random() * 28) + 1).padStart(2, "0");
-        const expiryDate = `2027-${month}-${day}`;
+        const pid = res.rows[0].id;
 
-        insertBatch.run({
-          product_id: productId,
-          batch_no: batchNo,
-          expiry_date: expiryDate,
-          cost_price: costPrice,
-          qty_on_hand: qty,
-          received_at: new Date().toISOString(),
-        });
-        console.log(
-          `  - Added batch ${batchNo}: Qty ${qty}, Cost ${costPrice}`,
+        await client.query(
+          "INSERT INTO inventory_batches (product_id, batch_no, expiry_date, cost_price, qty_on_hand, received_at) VALUES ($1, 'INIT', '2027-01-01', $2, $3, $4)",
+          [pid, cost, 10, new Date().toISOString()],
         );
+        count++;
       }
     }
-  })();
 
-  console.log("✅ Seeding completed.");
-}
+    await client.query("COMMIT");
+    console.log(`Seeded ${count} products.`);
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Seeding failed:", error);
+  } finally {
+    client.release();
+    pool.end();
+  }
+};
 
-seed();
+seedReal();
